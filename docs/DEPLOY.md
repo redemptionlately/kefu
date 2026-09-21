@@ -11,7 +11,11 @@ go-cqhttp 已归档不再采用;以后上 Linux 服务器可换 Lagrange(OneBot 
 
 ## 2. 微信(WeChatFerry 主 + wxauto 降级)
 
-1. 装与 `wcferry` 兼容的微信版本(3.9.x,见 wcferry 发布页说明),`pip install wcferry`。
+版本锁定(已验证): `wcferry==39.5.2` 配微信 `3.9.12.51`,安装包取自官方
+Release(`WeChatFerry v39.5.2` 自带 `WeChatSetup-3.9.12.51.exe`),
+SHA256=`86593666b6a81a742435879db25c2575a9f8967b877968c91aaa8a68b5f21af4`。
+
+1. `pip install "wcferry==39.5.2"`,装 3.9.12.51 版微信(别装 4.x)。
 2. `.env` 配 `WECHAT_MODE=ferry`,跑 `python -m askbot listen` 轮询收发。
 3. 无 Ferry 环境时 `WECHAT_MODE=wxauto`(需微信窗口前台,仅发送稳定)或 `log`(纯日志联调)。
 
