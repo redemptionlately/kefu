@@ -1,0 +1,12 @@
+# 非敏感结构化配置,敏感信息走 .env
+reply:
+  max_length: 800
+  group_only_on_at: true
+  handoff_keywords: ["转人工", "人工客服", "找人"]
+rate_limit:
+  per_user_per_10s: 3
+knowledge:
+  faq_path: "data/faq.json"
+session:
+  ttl_seconds: 1800
+  max_history: 20

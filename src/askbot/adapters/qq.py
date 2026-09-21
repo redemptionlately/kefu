@@ -1,0 +1,66 @@
+"""QQ NapCat OneBot11: webhook解析 + HTTP发送."""
+from __future__ import annotations
+
+import httpx
+from askbot.adapters.base import Adapter, MessageEvent
+from askbot.config import settings
+from askbot.infra.logger import logger
+
+
+def _extract_text(payload: dict) -> str:
+    msg = payload.get("message")
+    if isinstance(msg, str):
+        return msg.strip()
+    if isinstance(msg, list):
+        parts = [seg.get("data", {}).get("text", "") for seg in msg if seg.get("type") == "text"]
+        return "".join(parts).strip()
+    return str(payload.get("raw_message", "")).strip()
+
+
+class QQAdapter(Adapter):
+    platform = "qq"
+
+    async def start(self) -> None:
+        logger.info("QQAdapter ready (onebot={})", settings.onebot_http_url)
+
+    async def stop(self) -> None:
+        pass
+
+    def parse_webhook(self, payload: dict) -> MessageEvent | None:
+        if payload.get("post_type") != "message":
+            return None
+        text = _extract_text(payload)
+        if not text:
+            return None
+        msg_type = payload.get("message_type", "private")
+        group_id = str(payload["group_id"]) if msg_type == "group" else None
+        return MessageEvent(
+            platform="qq",
+            user_id=str(payload.get("user_id", "")),
+            group_id=group_id,
+            text=text,
+            msg_id=str(payload.get("message_id", "")),
+            raw=payload,
+        )
+
+    async def send(self, target_id: str, text: str, group_id: str | None = None) -> bool:
+        message_type = "group" if group_id else "private"
+        target = group_id or target_id
+        url = settings.onebot_http_url.rstrip("/") + "/send_msg"
+        headers = (
+            {"Authorization": f"Bearer {settings.onebot_access_token}"}
+            if settings.onebot_access_token
+            else {}
+        )
+        try:
+            async with httpx.AsyncClient(timeout=10) as c:
+                r = await c.post(
+                    url,
+                    headers=headers,
+                    json={"message_type": message_type, "user_id": target, "group_id": target, "message": text},
+                )
+                r.raise_for_status()
+            return True
+        except Exception:
+            logger.exception("QQ send failed")
+            return False
