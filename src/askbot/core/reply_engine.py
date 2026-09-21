@@ -19,16 +19,20 @@ class ReplyEngine:
         kb: KnowledgeBase | None = None,
         max_length: int = 800,
         rate_limit: int = 3,
+        group_only_on_at: bool = True,
     ) -> None:
         self.sessions = sessions
         self.llm = llm
         self.kb = kb or KnowledgeBase()
         self.max_length = max_length
         self.rate_limit = rate_limit
+        self.group_only_on_at = group_only_on_at
 
     async def handle(self, event: MessageEvent) -> str | None:
         key = SessionManager.key(event.platform, event.user_id, event.group_id)
-        if event.group_id and guardrails.should_ignore_group(event.text, event.at_bot):
+        if event.group_id and guardrails.should_ignore_group(
+            event.text, event.at_bot, self.group_only_on_at
+        ):
             return None
         if not guardrails.check_rate_limit(key, self.rate_limit):
             return "您发送得太快了,请稍后再试。"

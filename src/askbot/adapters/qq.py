@@ -11,6 +11,15 @@ from askbot.config import settings
 from askbot.infra.logger import logger
 
 
+def authorized(headers: dict | object) -> bool:
+    """OneBot 上报鉴权:未配 token 直接放行,否则校验 Authorization 头."""
+    token = settings.onebot_access_token
+    if not token:
+        return True
+    get = headers.get if hasattr(headers, "get") else dict(headers).get
+    return get("authorization", "") == f"Bearer {token}"
+
+
 def _extract_text(payload: dict) -> str:
     msg = payload.get("message")
     if isinstance(msg, str):

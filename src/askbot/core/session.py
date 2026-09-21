@@ -1,8 +1,13 @@
-"""会话管理:内存+TTL,key=platform:user/group."""
+"""会话管理:内存+TTL,可选挂载 store(sqlite)做持久化.
+
+store 只需实现 save(key, history)/load(key) 两个方法(见 infra/db.py:SessionStore),
+core 不直接 import infra,保持可测试.
+"""
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -13,9 +18,12 @@ class Session:
 
 
 class SessionManager:
-    def __init__(self, ttl_seconds: int = 1800, max_history: int = 20) -> None:
+    def __init__(
+        self, ttl_seconds: int = 1800, max_history: int = 20, store: Any = None
+    ) -> None:
         self.ttl = ttl_seconds
         self.max_history = max_history
+        self.store = store
         self._store: dict[str, Session] = {}
 
     @staticmethod
@@ -28,7 +36,12 @@ class SessionManager:
         now = time.time()
         if s and now - s.updated_at < self.ttl:
             return s
-        s = Session(key=key)
+        history: list[dict] = []
+        if self.store is not None:
+            loaded = self.store.load(key)
+            if loaded and now - loaded[1] < self.ttl:
+                history = loaded[0][-self.max_history :]
+        s = Session(key=key, history=history)
         self._store[key] = s
         return s
 
@@ -37,3 +50,5 @@ class SessionManager:
         s.history.append({"role": role, "content": content})
         s.history = s.history[-self.max_history :]
         s.updated_at = time.time()
+        if self.store is not None:
+            self.store.save(key, s.history, s.updated_at)

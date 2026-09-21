@@ -10,3 +10,4 @@ knowledge:
 session:
   ttl_seconds: 1800
   max_history: 20
+  persist: true

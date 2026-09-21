@@ -27,12 +27,16 @@ C:\Project\Ask/
 ├─ .env.example
 ├─ .gitignore
 ├─ config/
-│  └─ config.example.yaml
+│  └─ config.example.yaml   # persist:会话sqlite持久化开关
+├─ data/
+│  └─ faq.json              # 本地知识库(关键词最长命中)
+├─ docs/
+│  └─ DEPLOY.md             # NapCat + Ferry 对接指南
 ├─ src/askbot/
 │  ├─ __init__.py           # version
 │  ├─ __main__.py           # python -m askbot
 │  ├─ config.py             # YAML+ENV 加载,全局 Settings
-│  ├─ cli.py                # CLI: serve / doctor / send-test
+│  ├─ cli.py                # CLI: serve / doctor / send-test(真实引擎) / listen(微信轮询)
 │  ├─ app.py                # FastAPI: /healthz, /webhook/onebot, /webhook/wechat
 │  ├─ core/
 │  │  ├─ router.py          # 关键词路由 + LLM fallback
@@ -52,7 +56,11 @@ C:\Project\Ask/
 │     └─ db.py              # sqlite 会话持久化占位
 ├─ tests/
 │  ├─ test_router.py
-│  └─ test_session.py
+│  ├─ test_session.py
+│  ├─ test_knowledge.py
+│  ├─ test_guardrails.py
+│  ├─ test_reply_engine.py
+│  └─ test_adapters.py
 └─ scripts/
    └─ dev_run.ps1
 ```
@@ -118,14 +126,14 @@ class Adapter(ABC):
 - `qq.py`: 对接 NapCat OneBot11,出站 `POST {ONEBOT_HTTP_URL}/send_msg`,入站解析 `message/post_type`。
 - 新增平台(如企业微信): 在 `adapters/` 新建文件实现上式 4 件套,并在 `app.py` 注册 webhook 路由。
 
-## 7. 当前 Stub 与下一步(TODO)
+## 7. 当前状态(TODO)
 
-- [x] 骨架/路由/会话/护栏/OneBot webhook/doctor/cli
-- [ ] `llm/openai_compat.py` 当前 echo stub,下一步接真实 `httpx` 调用
-- [ ] `core/knowledge.py` 当前内存 FAQ,下一步接向量检索(RAG)
-- [ ] `infra/db.py` 当前 sqlite 占位,下一步接会话持久化
-- [ ] `adapters/wechat.py` 接真实 WeChatFerry 登录+消息拉取
-- [ ] 风控: QQ/微信防封(频率限制、人工接管关键词、夜间免打扰)
+- [x] 路由/会话(sqlite持久化)/护栏/OneBot webhook+鉴权/doctor/cli
+- [x] `llm/openai_compat.py` 真实调用+重试,无 key 时 stub
+- [x] `core/knowledge.py` JSON 知识库(`data/faq.json`)
+- [x] `adapters/wechat.py` Ferry 真实收发(`listen`)+wxauto 发送
+- [ ] 向量检索(RAG,知识库条数大了再上)
+- [ ] Lagrange 服务端备选、夜间免打扰
 
 ## 8. 风控与合规红线
 
@@ -136,9 +144,10 @@ class Adapter(ABC):
 ## 9. 常用命令速查
 
 ```powershell
-python -m askbot doctor                 # 配置自检
+python -m askbot doctor                 # 配置自检(依赖/知识库/sqlite)
 python -m askbot serve --port 8000      # 启动服务
-python -m askbot send-test --platform qq --target 123 --text hi  # 发送链路自测(日志模式)
+python -m askbot send-test --platform qq --target 123 --text 退货怎么走  # 走真实引擎
+python -m askbot listen                 # 微信 Ferry 轮询收发
 pytest -q                               # 全量测试
 ```
 
