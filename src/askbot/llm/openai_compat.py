@@ -26,7 +26,9 @@ class OpenAICompatClient:
     def is_stub(self) -> bool:
         return not self.api_key or self.api_key.startswith("sk-please")
 
-    async def chat(self, messages: list[dict], system: str = "") -> str:
+    async def chat(
+        self, messages: list[dict], system: str = "", images: list[str] | None = None
+    ) -> str:
         if self.is_stub():
             last = messages[-1]["content"] if messages else ""
             return f"[stub:{self.model}] 收到:{last}"

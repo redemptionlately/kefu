@@ -16,6 +16,7 @@ class MessageEvent:
     ts: float = field(default_factory=time)
     raw: dict = field(default_factory=dict)
     at_bot: bool = True  # 群聊是否@机器人,微信私聊恒True
+    images: list[str] = field(default_factory=list)  # 图片 URL,供识图
 
 
 class Adapter(ABC):

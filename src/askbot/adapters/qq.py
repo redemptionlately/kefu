@@ -30,6 +30,19 @@ def _extract_text(payload: dict) -> str:
     return str(payload.get("raw_message", "")).strip()
 
 
+def _extract_images(payload: dict) -> list[str]:
+    """OneBot 消息段里的图片直链,供识图;非 http 全部丢弃."""
+    msg = payload.get("message")
+    out: list[str] = []
+    if isinstance(msg, list):
+        for seg in msg:
+            if isinstance(seg, dict) and seg.get("type") == "image":
+                url = str(seg.get("data", {}).get("url", "") or "")
+                if url.startswith("http"):
+                    out.append(url)
+    return out
+
+
 class QQAdapter(Adapter):
     platform = "qq"
 
@@ -43,7 +56,8 @@ class QQAdapter(Adapter):
         if payload.get("post_type") != "message":
             return None
         text = _extract_text(payload)
-        if not text:
+        images = _extract_images(payload)
+        if not text and not images:
             return None
         msg_type = payload.get("message_type", "private")
         group_id = str(payload["group_id"]) if msg_type == "group" else None
@@ -54,6 +68,7 @@ class QQAdapter(Adapter):
             text=text,
             msg_id=str(payload.get("message_id", "")),
             raw=payload,
+            images=images,
         )
 
     async def send(self, target_id: str, text: str, group_id: str | None = None) -> bool:

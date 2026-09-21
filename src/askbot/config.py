@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     llm_provider: str = Field(default="api")  # api | deepseek-web
     deepseek_headless: bool = Field(default=True)
     deepseek_profile: str = Field(default="data/deepseek-profile")
+    deepseek_max_chars: int = Field(default=100000)
+    deepseek_think: bool = Field(default=False)
+    deepseek_search: bool = Field(default=False)
 
     onebot_http_url: str = Field(default="http://127.0.0.1:3000")
     onebot_ws_url: str = Field(default="ws://127.0.0.1:3001")

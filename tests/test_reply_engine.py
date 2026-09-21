@@ -6,7 +6,9 @@ from askbot.core.session import SessionManager
 
 
 class FakeLLM:
-    async def chat(self, messages: list[dict], system: str = "") -> str:
+    async def chat(
+        self, messages: list[dict], system: str = "", images: list[str] | None = None
+    ) -> str:
         return "fake-llm-reply"
 
 

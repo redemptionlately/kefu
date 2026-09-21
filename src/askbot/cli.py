@@ -16,7 +16,8 @@ def cmd_doctor() -> int:
     if settings.llm_provider == "deepseek-web":
         issues.append(
             f"LLM 网页版模式(headless={settings.deepseek_headless},"
-            f"profile={settings.deepseek_profile})"
+            f"profile={settings.deepseek_profile},预算={settings.deepseek_max_chars},"
+            f"深度思考={settings.deepseek_think},联网={settings.deepseek_search})"
         )
     elif settings.llm_api_key.startswith("sk-please"):
         issues.append("LLM_API_KEY 未配置(当前 stub 回显模式)")

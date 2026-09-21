@@ -47,7 +47,9 @@ class ReplyEngine:
                 reply = hit
             else:
                 history = self.sessions.get(key).history
-                reply = await self.llm.chat(history, system=SYSTEM_PROMPT)
+                reply = await self.llm.chat(
+                    history, system=SYSTEM_PROMPT, images=event.images or None
+                )
 
         reply = guardrails.sanitize(reply, self.max_length)
         self.sessions.append(key, "assistant", reply)
