@@ -108,7 +108,7 @@ pytest -q                    # 跑测试
 | 平台 | 选型 | 备选/不用 | 理由 |
 |---|---|---|---|
 | QQ | NapCatQQ + OneBot11(HTTP收发) | go-cqhttp(已归档不用); Lagrange(服务端备选) | Windows原生、维护活跃、OneBot标准解耦 |
-| 微信 | WeChatFerry 主(`WECHAT_MODE=ferry`) | wxauto 降级(`wxauto`); `log` 纯日志 | Ferry API稳定适合7x24客服;wxauto免版本锁但UI自动化脆弱,作兜底 |
+| 微信 | 个人号三条路全堵(见 DEPLOY §2),默认 `log` 模式只跑 QQ | Ferry(服务端拦登录)/UIA(4.x 无障碍树)/GeWeChat(停服) | 等用户决策:付费云API 或转企微,见 §7 |
 
 `adapters/base.py`:
 
@@ -131,7 +131,9 @@ class Adapter(ABC):
 - [x] 路由/会话(sqlite持久化)/护栏/OneBot webhook+鉴权/doctor/cli
 - [x] `llm/openai_compat.py` 真实调用+重试,无 key 时 stub
 - [x] `core/knowledge.py` JSON 知识库(`data/faq.json`)
-- [x] `adapters/wechat.py` Ferry 真实收发(`listen`)+wxauto 发送
+- [x] `adapters/wechat.py` Ferry/wxauto 代码保留(降级不阻断启动),但个人号三路已堵,见 DEPLOY §2
+- [ ] 微信通道待用户决策:付费云 API / 企业微信官方机器人(新立项)
+- [ ] QQ(NapCat)联调:装 NapCat→配上报→`serve`→小号私聊验证(下一步默认做这个)
 - [ ] 向量检索(RAG,知识库条数大了再上)
 - [ ] Lagrange 服务端备选、夜间免打扰
 

@@ -9,15 +9,16 @@
 
 go-cqhttp 已归档不再采用;以后上 Linux 服务器可换 Lagrange(OneBot 协议兼容,本项目不用改代码)。
 
-## 2. 微信(WeChatFerry 主 + wxauto 降级)
+## 2. 微信(个人号三条路均堵死,2026-09 本机实测结论)
 
-版本锁定(已验证): `wcferry==39.5.2` 配微信 `3.9.12.51`,安装包取自官方
-Release(`WeChatFerry v39.5.2` 自带 `WeChatSetup-3.9.12.51.exe`),
-SHA256=`86593666b6a81a742435879db25c2575a9f8967b877968c91aaa8a68b5f21af4`。
-
-1. `pip install "wcferry==39.5.2"`,装 3.9.12.51 版微信(别装 4.x)。
-2. `.env` 配 `WECHAT_MODE=ferry`,跑 `python -m askbot listen` 轮询收发。
-3. 无 Ferry 环境时 `WECHAT_MODE=wxauto`(需微信窗口前台,仅发送稳定)或 `log`(纯日志联调)。
+❌ WeChatFerry: `wcferry==39.5.2`+微信`3.9.12.51`都装好(SHA256 与官方一致),
+但服务端拒绝登录("当前微信版本过低,请升级至最新版本"),仓库已归档,此路终结。
+❌ UI 自动化(wxauto 全系):4.x 主窗口是 Qt 自绘,整个窗口只暴露 2 个 UIA 节点
+(`Qt51514QWindowIcon`+`MMUIRenderSubWindowHW`),任何 UI 自动化都是瞎子;
+原 `wxauto` 已从 PyPI 下架,`wxauto4/wxautox4` 内嵌 MinGW pyd 本机加载失败。
+❌ GeWeChat:官方已归档停服,无可用服务端(另有打击违规获取微信数据的合规背景)。
+→ 微信个人号如需继续,只剩付费云 API(自行评估合规/成本/封号风险)或转企业微信
+官方机器人(另一套方案,待立项)。在决策前,默认只跑 QQ 通道(`WECHAT_MODE=log`)。
 
 ## 3. 上线前检查
 
