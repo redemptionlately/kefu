@@ -1,4 +1,8 @@
-"""QQ NapCat OneBot11: webhook解析 + HTTP发送."""
+"""QQ 适配器.选型(已定,见 AGENTS.md §6): NapCatQQ OneBot11.
+
+收: NapCat HTTP POST → parse_webhook; 发: POST {ONEBOT_HTTP_URL}/send_msg.
+go-cqhttp 已归档不用;Lagrange 留作 Linux 服务端备选.
+"""
 from __future__ import annotations
 
 import httpx

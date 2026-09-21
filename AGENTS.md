@@ -95,7 +95,12 @@ pytest -q                    # 跑测试
 6. **依赖管理**: 只改 `pyproject.toml`,然后 `pip freeze` 思路同步 `requirements.txt`,不手动加第三方库不用就删。
 7. **验证**: 涉及 `core/` 改动必须跑 `pytest -q`;涉及 `app/cli/config` 改动必须跑 `python -m askbot doctor`。
 
-## 6. Adapter 实现契约
+## 6. Adapter 实现契约与选型(已定)
+
+| 平台 | 选型 | 备选/不用 | 理由 |
+|---|---|---|---|
+| QQ | NapCatQQ + OneBot11(HTTP收发) | go-cqhttp(已归档不用); Lagrange(服务端备选) | Windows原生、维护活跃、OneBot标准解耦 |
+| 微信 | WeChatFerry 主(`WECHAT_MODE=ferry`) | wxauto 降级(`wxauto`); `log` 纯日志 | Ferry API稳定适合7x24客服;wxauto免版本锁但UI自动化脆弱,作兜底 |
 
 `adapters/base.py`:
 
@@ -109,7 +114,7 @@ class Adapter(ABC):
   def parse_webhook(payload: dict) -> MessageEvent | None
 ```
 
-- `wechat.py`: 默认 `WeChatFerry` 模式,未安装 `wcferry` 时 `available()=False`,走日志降级,不抛异常阻断启动。
+- `wechat.py`: `WECHAT_MODE=ferry|wxauto|log`,对应依赖缺失时自动降级为日志模式,不抛异常阻断启动。
 - `qq.py`: 对接 NapCat OneBot11,出站 `POST {ONEBOT_HTTP_URL}/send_msg`,入站解析 `message/post_type`。
 - 新增平台(如企业微信): 在 `adapters/` 新建文件实现上式 4 件套,并在 `app.py` 注册 webhook 路由。
 
