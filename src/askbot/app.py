@@ -15,6 +15,7 @@ from askbot.core.reply_engine import ReplyEngine
 from askbot.core.session import SessionManager
 from askbot.infra.db import SessionStore
 from askbot.infra.logger import logger
+from askbot.llm.base import LLMClient
 from askbot.llm.openai_compat import OpenAICompatClient
 
 
@@ -37,9 +38,15 @@ def build_engine() -> ReplyEngine:
     )
     kb = KnowledgeBase.from_json(kb_cfg.get("faq_path", "data/faq.json"))
     logger.info("知识库加载 faq 条数={}", len(kb.faq))
+    if settings.llm_provider == "deepseek-web":
+        from askbot.llm.deepseek_web import DeepSeekWebClient
+
+        llm: LLMClient = DeepSeekWebClient()
+    else:
+        llm = OpenAICompatClient()
     return ReplyEngine(
         sessions,
-        OpenAICompatClient(),
+        llm,
         kb,
         max_length=int(reply_cfg.get("max_length", 800)),
         rate_limit=int(rate_cfg.get("per_user_per_10s", 3)),

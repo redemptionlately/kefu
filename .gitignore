@@ -4,6 +4,7 @@ __pycache__/
 .env
 config/config.yaml
 *.db
+data/deepseek-profile/
 logs/
 dist/
 build/

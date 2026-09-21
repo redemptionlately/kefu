@@ -36,7 +36,6 @@ def test_wechat_webhook():
     assert wx.parse_webhook({"sender": "x", "content": "  "}) is None
 
 
-def test_wcf_msg_parse():
-    e = wx.parse_wcf_msg({"type": 1, "content": "hi", "sender": "wxid_b", "id": "9"})
-    assert e and e.user_id == "wxid_b"
-    assert wx.parse_wcf_msg({"type": 0, "content": "hi", "sender": "wxid_b"}) is None
+def test_wechat_always_log_mode():
+    assert WeChatAdapter(mode="ferry").mode == "log"
+    assert WeChatAdapter().available() is False

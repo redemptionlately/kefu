@@ -50,7 +50,8 @@ C:\Project\Ask/
 │  │  └─ qq.py              # OneBot11(NapCat) 发送+webhook 解析
 │  ├─ llm/
 │  │  ├─ base.py            # LLMClient Protocol
-│  │  └─ openai_compat.py   # OpenAI兼容实现(DeepSeek/Qwen/OpenAI均可)
+│  │  ├─ openai_compat.py   # OpenAI兼容实现(DeepSeek/Qwen/OpenAI均可)
+│  │  └─ deepseek_web.py    # DeepSeek网页版(Playwright,失败降级,见§7风险)
 │  └─ infra/
 │     ├─ logger.py          # loguru 统一日志
 │     └─ db.py              # sqlite 会话持久化占位
@@ -60,7 +61,9 @@ C:\Project\Ask/
 │  ├─ test_knowledge.py
 │  ├─ test_guardrails.py
 │  ├─ test_reply_engine.py
-│  └─ test_adapters.py
+│  ├─ test_adapters.py
+│  ├─ test_webhook.py
+│  └─ test_llm_web.py
 └─ scripts/
    └─ dev_run.ps1
 ```
@@ -91,7 +94,8 @@ pytest -q                    # 跑测试
   1. 加字段(带默认值)+类型注解,
   2. 同步 `.env.example` 和 `config/config.example.yaml`,
   3. 在 `doctor` 里加校验。
-- LLM 接入 OpenAI 兼容接口:`LLM_BASE_URL / LLM_API_KEY / LLM_MODEL`。
+- LLM 二选一:`LLM_PROVIDER=api`(OpenAI 兼容:`LLM_BASE_URL / LLM_API_KEY / LLM_MODEL`)
+  或 `deepseek-web`(Playwright 驱动网页版,需先登录,改版/封号自担)。
 
 ## 5. 代码规范(Agent 必须遵守)
 
@@ -134,6 +138,7 @@ class Adapter(ABC):
 - [x] `adapters/wechat.py` Ferry/wxauto 代码保留(降级不阻断启动),但个人号三路已堵,见 DEPLOY §2
 - [ ] 微信通道待用户决策:付费云 API / 企业微信官方机器人(新立项)
 - [ ] QQ(NapCat)联调:装 NapCat→配上报→`serve`→小号私聊验证(下一步默认做这个)
+- [x] `llm/deepseek_web.py` 网页版 DeepSeek(Playwright 持久会话,失败降级;改版/封号风险用户已接受)
 - [ ] 向量检索(RAG,知识库条数大了再上)
 - [ ] Lagrange 服务端备选、夜间免打扰
 

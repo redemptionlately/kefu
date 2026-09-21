@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     llm_base_url: str = Field(default="https://api.openai.com/v1")
     llm_api_key: str = Field(default="sk-please-change")
     llm_model: str = Field(default="gpt-4o-mini")
+    llm_provider: str = Field(default="api")  # api | deepseek-web
+    deepseek_headless: bool = Field(default=True)
+    deepseek_profile: str = Field(default="data/deepseek-profile")
 
     onebot_http_url: str = Field(default="http://127.0.0.1:3000")
     onebot_ws_url: str = Field(default="ws://127.0.0.1:3001")
