@@ -1,6 +1,7 @@
 """FastAPI: /healthz, /webhook/onebot(QQ NapCat), /webhook/wechat."""
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -11,8 +12,10 @@ from askbot.adapters.qq import QQAdapter, authorized
 from askbot.adapters.wechat import WeChatAdapter
 from askbot.config import settings
 from askbot.core.knowledge import KnowledgeBase
+from askbot.core.playbook import PlaybookEngine
 from askbot.core.reply_engine import ReplyEngine
 from askbot.core.session import SessionManager
+from askbot.core.style import StyleCorpus
 from askbot.infra.db import SessionStore
 from askbot.infra.logger import logger
 from askbot.llm.base import LLMClient
@@ -38,6 +41,12 @@ def build_engine() -> ReplyEngine:
     )
     kb = KnowledgeBase.from_json(kb_cfg.get("faq_path", "data/faq.json"))
     logger.info("知识库加载 faq 条数={}", len(kb.faq))
+    pb_cfg = cfg.get("playbooks", {})
+    playbooks = PlaybookEngine.from_dir(pb_cfg.get("dir", "data/playbooks"))
+    logger.info("话术 playbook 加载={}", list(playbooks.playbooks))
+    style_cfg = cfg.get("style", {})
+    style = StyleCorpus.from_dir(style_cfg.get("dir", "data/style"))
+    logger.info("人味语料条数={}", len(style.examples))
     if settings.llm_provider == "deepseek-web":
         from askbot.llm.deepseek_web import DeepSeekWebClient
 
@@ -51,6 +60,8 @@ def build_engine() -> ReplyEngine:
         max_length=int(reply_cfg.get("max_length", 800)),
         rate_limit=int(rate_cfg.get("per_user_per_10s", 3)),
         group_only_on_at=bool(reply_cfg.get("group_only_on_at", True)),
+        playbooks=playbooks,
+        style=style,
     )
 
 
@@ -96,7 +107,11 @@ async def onebot_webhook(req: Request) -> JSONResponse:
         return JSONResponse({"ignored": True})
     reply = await _engine(req).handle(event)
     if reply:
-        await qq.send(event.user_id, reply, event.group_id)
+        engine = _engine(req)
+        for i, bubble in enumerate(engine.bubbles(reply)):
+            if i:
+                await asyncio.sleep(0.8)  # 真人打字节奏
+            await qq.send(event.user_id, bubble, event.group_id)
     return JSONResponse({"ok": True})
 
 
@@ -109,7 +124,11 @@ async def wechat_webhook(req: Request) -> dict:
         return {"ignored": True}
     reply = await _engine(req).handle(event)
     if reply:
-        await wechat.send(event.user_id, reply, event.group_id)
+        engine = _engine(req)
+        for i, bubble in enumerate(engine.bubbles(reply)):
+            if i:
+                await asyncio.sleep(0.8)
+            await wechat.send(event.user_id, bubble, event.group_id)
     return {"ok": True, "reply": reply}
 
 

@@ -66,7 +66,8 @@ def cmd_send_test(platform: str, target: str, text: str) -> int:
         event = MessageEvent(platform=platform, user_id=target, text=text)
         reply = await engine.handle(event)
         print(f"in : [{platform}] {target}: {text}")
-        print(f"out: {reply}")
+        for b in engine.bubbles(reply or ""):
+            print(f"out: {b}")
 
     asyncio.run(_run())
     return 0

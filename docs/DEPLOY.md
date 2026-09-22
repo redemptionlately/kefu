@@ -1,4 +1,4 @@
-# 部署对接指南(QQ=NapCat,微信=WeChatFerry)
+# 部署对接指南(QQ=NapCat 已通,微信个人号已堵,闲鱼待上游)
 
 ## 1. QQ(NapCat OneBot11)
 
@@ -20,7 +20,16 @@ go-cqhttp 已归档不再采用;以后上 Linux 服务器可换 Lagrange(OneBot 
 → 微信个人号如需继续,只剩付费云 API(自行评估合规/成本/封号风险)或转企业微信
 官方机器人(另一套方案,待立项)。在决策前,默认只跑 QQ 通道(`WECHAT_MODE=log`)。
 
-## 3. 上线前检查
+## 3. 闲鱼(待上游,协议先行)
+
+闲鱼无官方客服 API,本项目只定协议不等实现:
+
+- 上游(RPA/协议)按 `adapters/xianyu.py:parse_webhook` 约定推送
+  `{buyer, item_id, item_title?, content, msgid?}`,服务侧开新 webhook 路由即可。
+- `thread_id=buyer:item` 同客同品隔离已在引擎层就绪(QQ/QQ群同理可用)。
+- 合规:单用户 30s 内 ≤2 条、首日人工盯、绝不索要身份证/银行卡、不发外链。
+
+## 4. 上线前检查
 
 ```powershell
 python -m askbot doctor

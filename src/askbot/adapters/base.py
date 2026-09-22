@@ -17,6 +17,8 @@ class MessageEvent:
     raw: dict = field(default_factory=dict)
     at_bot: bool = True  # 群聊是否@机器人,微信私聊恒True
     images: list[str] = field(default_factory=list)  # 图片 URL,供识图
+    thread_id: str | None = None  # 同客同品会话域(如咸鱼 user:item),有则会话按它隔离
+    product: str | None = None  # 商品/服务标题,用于 playbook 匹配
 
 
 class Adapter(ABC):

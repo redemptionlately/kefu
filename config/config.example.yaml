@@ -7,6 +7,10 @@ rate_limit:
   per_user_per_10s: 3
 knowledge:
   faq_path: "data/faq.json"
+playbooks:
+  dir: "data/playbooks"
+style:
+  dir: "data/style"
 session:
   ttl_seconds: 1800
   max_history: 20

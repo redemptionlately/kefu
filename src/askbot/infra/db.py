@@ -17,6 +17,10 @@ def init_db(path: Path = DB_PATH) -> None:
             "CREATE TABLE IF NOT EXISTS sessions"
             "(key TEXT PRIMARY KEY, updated_at REAL, history TEXT)"
         )
+        try:  # 老库迁移:加 data 列
+            conn.execute("ALTER TABLE sessions ADD COLUMN data TEXT DEFAULT '{}'")
+        except sqlite3.OperationalError:
+            pass
 
 
 class SessionStore:
@@ -26,22 +30,35 @@ class SessionStore:
         self.path = Path(path)
         init_db(self.path)
 
-    def save(self, key: str, history: list[dict], updated_at: float | None = None) -> None:
+    def save(
+        self,
+        key: str,
+        history: list[dict],
+        updated_at: float | None = None,
+        data: dict | None = None,
+    ) -> None:
         with sqlite3.connect(self.path) as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO sessions(key, updated_at, history) VALUES(?,?,?)",
-                (key, updated_at or time.time(), json.dumps(history, ensure_ascii=False)),
+                "INSERT OR REPLACE INTO sessions(key, updated_at, history, data)"
+                " VALUES(?,?,?,?)",
+                (
+                    key,
+                    updated_at or time.time(),
+                    json.dumps(history, ensure_ascii=False),
+                    json.dumps(data or {}, ensure_ascii=False),
+                ),
             )
 
-    def load(self, key: str) -> tuple[list[dict], float] | None:
+    def load(self, key: str) -> tuple[list[dict], float, dict] | None:
         with sqlite3.connect(self.path) as conn:
             row = conn.execute(
-                "SELECT history, updated_at FROM sessions WHERE key=?", (key,)
+                "SELECT history, updated_at, data FROM sessions WHERE key=?", (key,)
             ).fetchone()
         if not row:
             return None
         try:
-            return json.loads(row[0]), float(row[1])
+            data = json.loads(row[2] or "{}")
+            return json.loads(row[0]), float(row[1]), data
         except (json.JSONDecodeError, ValueError, TypeError):
             return None
 

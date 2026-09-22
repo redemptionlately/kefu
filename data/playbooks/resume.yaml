@@ -1,0 +1,25 @@
+# 简历代写服务话术:需求沟通 -> 信息收集 -> 初稿
+id: resume
+name: 简历代写
+match_keywords: ["简历", "求职", "找工作", "简历优化", "改简历", "代写"]
+stages:
+  - id: demand
+    slot: resume_type
+    ask:
+      - "您好呀~想先了解下,这份简历主要用来做什么?比如求职、跳槽、考研、考公还是留学?"
+      - "方便说下这份简历的用途吗?求职/跳槽/考研/考公/留学,告诉我一个就行~"
+    advance_keywords: ["求职", "跳槽", "实习", "校招", "考研", "考公", "留学", "国企", "外企", "转行"]
+  - id: collect
+    slots:
+      - key: name
+        ask: "好的,已经记下啦~怎么称呼您?"
+      - key: education
+        ask: "您的最高学历和毕业院校是?"
+      - key: experience
+        ask: "工作几年了?最近一段经历主要做什么?"
+      - key: target
+        ask: "目标岗位或者行业是什么?"
+      - key: contact
+        ask: "最后留个联系方式吧,初稿出来我第一时间发您~"
+  - id: draft
+    ask: []

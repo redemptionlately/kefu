@@ -29,25 +29,30 @@ C:\Project\Ask/
 ├─ config/
 │  └─ config.example.yaml   # persist:会话sqlite持久化开关
 ├─ data/
-│  └─ faq.json              # 本地知识库(关键词最长命中)
+│  ├─ faq.json              # 本地知识库(关键词最长命中)
+│  ├─ playbooks/resume.yaml # 简历服务话术(需求→收资→初稿)
+│  └─ style/resume_cs.json  # 真人客服语料(few-shot 学人味)
 ├─ docs/
 │  └─ DEPLOY.md             # NapCat + Ferry 对接指南
 ├─ src/askbot/
 │  ├─ __init__.py           # version
 │  ├─ __main__.py           # python -m askbot
 │  ├─ config.py             # YAML+ENV 加载,全局 Settings
-│  ├─ cli.py                # CLI: serve / doctor / send-test(真实引擎) / listen(微信轮询)
+│  ├─ cli.py                # CLI: serve / doctor / send-test(真实引擎)
 │  ├─ app.py                # FastAPI: /healthz, /webhook/onebot, /webhook/wechat
 │  ├─ core/
-│  │  ├─ router.py          # 关键词路由 + LLM fallback
-│  │  ├─ session.py         # 会话管理(内存+TTL,可换 Redis)
-│  │  ├─ reply_engine.py    # 编排: session→router→knowledge→llm→guardrails
-│  │  ├─ knowledge.py       # 本地 FAQ/知识库接口( stub )
+│  │  ├─ router.py          # 关键词路由 + LLM fallback(转人工短路最高优)
+│  │  ├─ session.py         # 会话管理(thread_id 同客同品隔离+sqlite持久化)
+│  │  ├─ reply_engine.py    # 编排: handoff→playbook→reply→knowledge→llm→分条发送
+│  │  ├─ knowledge.py       # JSON 知识库(关键词最长命中)
+│  │  ├─ playbook.py        # 服务话术引擎(yaml 驱动,状态存 session.data)
+│  │  ├─ style.py           # 人味:语料 few-shot + 短句分条
 │  │  └─ guardrails.py      # 限流/敏感词/长度截断
 │  ├─ adapters/
-│  │  ├─ base.py            # MessageEvent / Adapter 抽象,所有适配器必须实现
-│  │  ├─ wechat.py          # WeChatFerry 占位实现(未装依赖时降级)
-│  │  └─ qq.py              # OneBot11(NapCat) 发送+webhook 解析
+│  │  ├─ base.py            # MessageEvent(thread_id/product/images)+Adapter 抽象
+│  │  ├─ wechat.py          # 个人号已下线,最小 log 实现
+│  │  ├─ qq.py              # OneBot11(NapCat) 发送+webhook 解析(含图片段)
+│  │  └─ xianyu.py          # 闲鱼占位(log):协议已定,等 RPA/协议上游
 │  ├─ llm/
 │  │  ├─ base.py            # LLMClient Protocol
 │  │  ├─ openai_compat.py   # OpenAI兼容实现(DeepSeek/Qwen/OpenAI均可)
@@ -63,7 +68,9 @@ C:\Project\Ask/
 │  ├─ test_reply_engine.py
 │  ├─ test_adapters.py
 │  ├─ test_webhook.py
-│  └─ test_llm_web.py
+│  ├─ test_llm_web.py
+│  ├─ test_playbook.py
+│  └─ test_style.py
 └─ scripts/
    └─ dev_run.ps1
 ```
@@ -113,6 +120,7 @@ pytest -q                    # 跑测试
 |---|---|---|---|
 | QQ | NapCatQQ + OneBot11(HTTP收发) | go-cqhttp(已归档不用); Lagrange(服务端备选) | Windows原生、维护活跃、OneBot标准解耦 |
 | 微信 | 个人号三条路全堵(见 DEPLOY §2),默认 `log` 模式只跑 QQ | Ferry(服务端拦登录)/UIA(4.x 无障碍树)/GeWeChat(停服) | 等用户决策:付费云API 或转企微,见 §7 |
+| 闲鱼 | 无官方 API,占位 `log` + 协议先行(`thread_id=user:item`) | RPA/第三方协议(封号风险高,小号试水) | 先跑通 QQ,闲鱼等上游,合规见 `xianyu.py` 头注 |
 
 `adapters/base.py`:
 
@@ -140,6 +148,8 @@ class Adapter(ABC):
 - [ ] QQ(NapCat)联调:装 NapCat→配上报→`serve`→小号私聊验证(下一步默认做这个)
 - [x] `llm/deepseek_web.py` 网页版 DeepSeek(Playwright 持久会话,失败降级;改版/封号风险用户已接受)
 - [x] 网页版三件套:100k 上下文预算裁剪/每轮人设前置/深度思考+联网开关/QQ 图片上传识图(待真实图片联调)
+- [x] 同客同品会话(`thread_id`)+简历 playbook(需求→收资→初稿)+人味(语料 few-shot+分条)
+- [ ] 闲鱼上游对接(RPA/协议二选一,用户决策)
 - [ ] 向量检索(RAG,知识库条数大了再上)
 - [ ] Lagrange 服务端备选、夜间免打扰
 
